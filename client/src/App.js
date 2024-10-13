@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
+import io from 'socket.io-client';
 import './App.css';
+
+const socket = io('http://localhost:3001'); // Connect to the backend
 
 function App() {
   const [files, setFiles] = useState(() => {
@@ -13,6 +16,21 @@ function App() {
     localStorage.setItem('files', JSON.stringify(files));
   }, [files]);
 
+  // Listen for code updates from other users
+  useEffect(() => {
+    socket.on('receive-code-update', (newCode) => {
+      setFiles(prevFiles => {
+        const updatedFiles = [...prevFiles];
+        updatedFiles[currentFileIndex] = { ...updatedFiles[currentFileIndex], content: newCode };
+        return updatedFiles;
+      });
+    });
+
+    return () => {
+      socket.off('receive-code-update');
+    };
+  }, [currentFileIndex]);
+
   const handleFileChange = (index) => {
     setCurrentFileIndex(index);
   };
@@ -23,6 +41,9 @@ function App() {
       newFiles[currentFileIndex] = { ...newFiles[currentFileIndex], content: newCode };
       return newFiles;
     });
+
+    // Emit the code update to the server
+    socket.emit('code-update', newCode);
   };
 
   const addNewFile = () => {
