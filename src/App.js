@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Editor } from '@monaco-editor/react';
+import './App.css';
 
 function App() {
   const [files, setFiles] = useState(() => {
@@ -44,35 +45,41 @@ function App() {
   return (
     <div className="App">
       <h1>Collaborative Code Editor</h1>
-      <div className="file-actions">
-        <button onClick={addNewFile}>New File</button>
-        {files.length > 1 && (
-          <button onClick={() => deleteFile(currentFileIndex)}>Delete Current File</button>
-        )}
+      <div className="editor-container">
+        <div className="sidebar">
+          <div className="file-actions">
+            <button onClick={addNewFile}>New File</button>
+            {files.length > 1 && (
+              <button onClick={() => deleteFile(currentFileIndex)}>Delete Current File</button>
+            )}
+          </div>
+          <div className="file-list">
+            {files.map((file, index) => (
+              <button
+                key={file.name}
+                onClick={() => handleFileChange(index)}
+                className={index === currentFileIndex ? 'active' : ''}
+              >
+                {file.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="editor-wrapper">
+          <Editor
+            height="100%"
+            language="javascript"
+            theme="vs-dark"
+            value={files[currentFileIndex].content}
+            onChange={handleEditorChange}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              scrollBeyondLastLine: false,
+            }}
+          />
+        </div>
       </div>
-      <div className="file-list">
-        {files.map((file, index) => (
-          <button
-            key={file.name}
-            onClick={() => handleFileChange(index)}
-            style={{ fontWeight: index === currentFileIndex ? 'bold' : 'normal' }}
-          >
-            {file.name}
-          </button>
-        ))}
-      </div>
-      <Editor
-        height="80vh"
-        language="javascript"
-        theme="vs-dark"
-        value={files[currentFileIndex].content}
-        onChange={handleEditorChange}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          scrollBeyondLastLine: false,
-        }}
-      />
     </div>
   );
 }
