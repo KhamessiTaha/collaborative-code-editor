@@ -1,15 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Editor } from '@monaco-editor/react';
 import io from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
 
-const socket = io('http://localhost:3001'); // Change to your backend URL
+const socket = io('http://localhost:3001');
 
 function App() {
   const [files, setFiles] = useState([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [isConnected, setIsConnected] = useState(socket.connected);
+
+  const updateFileContent = useCallback((fileId, newContent) => {
+    setFiles(prevFiles => prevFiles.map(file => 
+      file.id === fileId ? { ...file, content: newContent } : file
+    ));
+  }, []);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -24,8 +30,11 @@ function App() {
       setFiles(prevFiles => [...prevFiles, newFile]);
     });
     socket.on('file-deleted', (fileId) => {
-      setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
-      setCurrentFileIndex(prev => (prev >= files.length - 1 ? Math.max(0, prev - 1) : prev));
+      setFiles(prevFiles => {
+        const newFiles = prevFiles.filter(file => file.id !== fileId);
+        setCurrentFileIndex(prev => (prev >= newFiles.length ? Math.max(0, newFiles.length - 1) : prev));
+        return newFiles;
+      });
     });
     socket.on('file-renamed', ({ fileId, newName }) => {
       setFiles(prevFiles => prevFiles.map(file => 
@@ -33,9 +42,7 @@ function App() {
       ));
     });
     socket.on('file-content-updated', ({ fileId, newContent }) => {
-      setFiles(prevFiles => prevFiles.map(file => 
-        file.id === fileId ? { ...file, content: newContent } : file
-      ));
+      updateFileContent(fileId, newContent);
     });
 
     return () => {
@@ -47,7 +54,7 @@ function App() {
       socket.off('file-renamed');
       socket.off('file-content-updated');
     };
-  }, []);
+  }, [updateFileContent]);
 
   const addNewFile = () => {
     const newFile = { id: uuidv4(), name: `file${files.length + 1}.js`, content: '// New file content' };
@@ -96,21 +103,18 @@ function App() {
 }
 
 const Header = ({ title, isConnected }) => (
-  <h1>
-    {title}
+  <header className="header">
+    <h1>{title}</h1>
     <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
       {isConnected ? 'Connected' : 'Disconnected'}
     </span>
-  </h1>
+  </header>
 );
 
 const Sidebar = ({ files, currentFileIndex, onFileChange, onAddFile, onDeleteFile, onRenameFile }) => (
   <div className="sidebar">
     <div className="file-actions">
       <button onClick={onAddFile}>New File</button>
-      {files.length > 1 && (
-        <button onClick={() => onDeleteFile(currentFileIndex)}>Delete Current File</button>
-      )}
     </div>
     <div className="file-list">
       {files.map((file, index) => (
@@ -123,10 +127,13 @@ const Sidebar = ({ files, currentFileIndex, onFileChange, onAddFile, onDeleteFil
           </button>
           <button onClick={() => {
             const newName = prompt('Enter new file name:', file.name);
-            if (newName) onRenameFile(index, newName);
+            if (newName && newName !== file.name) onRenameFile(index, newName);
           }}>
-            Rename
+            R
           </button>
+          {files.length > 1 && (
+            <button onClick={() => onDeleteFile(index)}>X</button>
+          )}
         </div>
       ))}
     </div>
