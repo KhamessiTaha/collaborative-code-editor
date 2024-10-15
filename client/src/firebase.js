@@ -6,13 +6,13 @@ import { getAnalytics } from "firebase/analytics";
 
 // Your web app's Firebase configuration (from the Firebase Console)
 const firebaseConfig = {
-  apiKey: "AIzaSyAblb0XCt04-1GzIX-9ciQiT2qPhToUDgA",
-  authDomain: "collaborative-code-edito-135fa.firebaseapp.com",
-  projectId: "collaborative-code-edito-135fa",
-  storageBucket: "collaborative-code-edito-135fa.appspot.com",
-  messagingSenderId: "274241548403",
-  appId: "1:274241548403:web:644c554e86cae178b6ba06",
-  measurementId: "G-DEYRY4F36J"
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId:process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase

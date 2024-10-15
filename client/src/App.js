@@ -152,7 +152,7 @@ const Sidebar = ({ files, currentFileIndex, onFileChange, onAddFile, onDeleteFil
 const EditorWrapper = ({ content, language, onEditorChange }) => (
   <div className="editor-wrapper">
     <Editor
-      height="100%"
+      height="100%" 
       language={language}
       theme="vs-dark"
       value={content}
