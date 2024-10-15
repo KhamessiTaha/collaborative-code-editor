@@ -1,60 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-:root {
-  --primary-color: #2c3e50;
-  --secondary-color: #34495e;
-  --accent-color: #3498db;
-  --success-color: #2ecc71;
-  --danger-color: #e74c3c;
-  --text-color: #ecf0f1;
-  --background-color: #f7f9fc;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-color);
-}
-
 .App {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: #f7f9fc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.header {
-  background-color: var(--primary-color);
-  padding: 1rem 2rem;
+h1 {
+  background-color: #2c3e50;
+  color: white;
+  margin: 0;
+  padding: 20px;
+  font-size: 24px;
+  text-align: center;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header h1 {
-  font-size: 1.5rem;
-  font-weight: 500;
 }
 
 .connection-status {
-  font-size: 0.8rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 1rem;
-  font-weight: 500;
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 15px;
 }
 
 .connected {
-  background-color: var(--success-color);
+  background-color: #2ecc71;
 }
 
 .disconnected {
-  background-color: var(--danger-color);
+  background-color: #e74c3c;
 }
 
 .editor-container {
@@ -65,28 +40,28 @@ body {
 
 .sidebar {
   width: 250px;
-  background-color: var(--secondary-color);
-  padding: 1rem;
+  background-color: #2c3e50;
+  color: white;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .file-actions {
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
 }
 
 .file-actions button {
   width: 100%;
-  padding: 0.8rem;
-  margin-bottom: 0.5rem;
-  background-color: var(--accent-color);
-  color: var(--text-color);
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #3498db;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
 .file-actions button:hover {
@@ -100,38 +75,29 @@ body {
 
 .file-item {
   display: flex;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.file-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 5px;
 }
 
 .file-item button {
-  padding: 0.6rem;
-  background-color: var(--secondary-color);
-  color: var(--text-color);
+  padding: 10px;
+  background-color: #34495e;
+  color: white;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
 }
 
 .file-item button:first-child {
   flex-grow: 1;
   text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
 }
 
 .file-item button:last-child {
   background-color: #e67e22;
-  padding: 0.6rem 0.8rem;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 .file-item button:hover {
@@ -143,29 +109,11 @@ body {
 }
 
 .file-item button.active {
-  background-color: var(--accent-color);
-  font-weight: 500;
+  background-color: #1abc9c;
+  font-weight: bold;
 }
 
 .editor-wrapper {
   flex: 1;
   overflow: hidden;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--secondary-color);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #2980b9;
 }

@@ -18,16 +18,6 @@ let files = [
   { id: '1', name: 'file1.js', content: '// File 1 content' }
 ];
 
-function getUniqueFileName(baseName) {
-  let name = baseName;
-  let counter = 1;
-  while (files.some(file => file.name === name)) {
-    name = `${baseName.split('.')[0]}(${counter}).${baseName.split('.')[1]}`;
-    counter++;
-  }
-  return name;
-}
-
 io.on('connection', (socket) => {
   console.log('A user connected');
 
@@ -36,7 +26,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('add-file', (newFile) => {
-    newFile.name = getUniqueFileName(newFile.name);
     files.push(newFile);
     io.emit('file-added', newFile);
   });
@@ -49,9 +38,8 @@ io.on('connection', (socket) => {
   socket.on('rename-file', ({ fileId, newName }) => {
     const file = files.find(file => file.id === fileId);
     if (file) {
-      const uniqueName = getUniqueFileName(newName);
-      file.name = uniqueName;
-      io.emit('file-renamed', { fileId, newName: uniqueName });
+      file.name = newName;
+      io.emit('file-renamed', { fileId, newName });
     }
   });
 
