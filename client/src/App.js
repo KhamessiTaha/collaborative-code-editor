@@ -3,6 +3,8 @@ import { Editor } from '@monaco-editor/react';
 import io from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
+import Auth from './Auth'; // Import the Auth component for login/signup
+import { auth } from './firebase'; // Import Firebase auth
 
 const socket = io('http://localhost:3001'); // Change to your backend URL
 
@@ -10,44 +12,52 @@ function App() {
   const [files, setFiles] = useState([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [isConnected, setIsConnected] = useState(socket.connected);
+  const [user, setUser] = useState(null); // State to track the authenticated user
 
   useEffect(() => {
-    socket.on('connect', () => {
-      setIsConnected(true);
-      socket.emit('get-initial-files');
-    });
-    socket.on('disconnect', () => setIsConnected(false));
-    socket.on('initial-files', (initialFiles) => {
-      setFiles(initialFiles);
-    });
-    socket.on('file-added', (newFile) => {
-      setFiles(prevFiles => [...prevFiles, newFile]);
-    });
-    socket.on('file-deleted', (fileId) => {
-      setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
-      setCurrentFileIndex(prev => (prev >= files.length - 1 ? Math.max(0, prev - 1) : prev));
-    });
-    socket.on('file-renamed', ({ fileId, newName }) => {
-      setFiles(prevFiles => prevFiles.map(file => 
-        file.id === fileId ? { ...file, name: newName } : file
-      ));
-    });
-    socket.on('file-content-updated', ({ fileId, newContent }) => {
-      setFiles(prevFiles => prevFiles.map(file => 
-        file.id === fileId ? { ...file, content: newContent } : file
-      ));
-    });
+    if (user) { // Only connect if user is authenticated
+      socket.on('connect', () => {
+        setIsConnected(true);
+        socket.emit('get-initial-files');
+      });
 
-    return () => {
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('initial-files');
-      socket.off('file-added');
-      socket.off('file-deleted');
-      socket.off('file-renamed');
-      socket.off('file-content-updated');
-    };
-  }, []);
+      socket.on('disconnect', () => setIsConnected(false));
+      socket.on('initial-files', (initialFiles) => {
+        setFiles(initialFiles);
+      });
+      socket.on('file-added', (newFile) => {
+        setFiles(prevFiles => [...prevFiles, newFile]);
+      });
+      socket.on('file-deleted', (fileId) => {
+        setFiles(prevFiles => prevFiles.filter(file => file.id !== fileId));
+        setCurrentFileIndex(prev => (prev >= files.length - 1 ? Math.max(0, prev - 1) : prev));
+      });
+      socket.on('file-renamed', ({ fileId, newName }) => {
+        setFiles(prevFiles => prevFiles.map(file => 
+          file.id === fileId ? { ...file, name: newName } : file
+        ));
+      });
+      socket.on('file-content-updated', ({ fileId, newContent }) => {
+        setFiles(prevFiles => prevFiles.map(file => 
+          file.id === fileId ? { ...file, content: newContent } : file
+        ));
+      });
+      
+      return () => {
+        socket.off('connect');
+        socket.off('disconnect');
+        socket.off('initial-files');
+        socket.off('file-added');
+        socket.off('file-deleted');
+        socket.off('file-renamed');
+        socket.off('file-content-updated');
+      };
+    }
+  }, [user, files.length]);
+
+  const handleLogin = (loggedInUser) => {
+    setUser(loggedInUser); // Set the authenticated user
+  };
 
   const addNewFile = () => {
     const newFile = { id: uuidv4(), name: `file${files.length + 1}.js`, content: '// New file content' };
@@ -73,24 +83,30 @@ function App() {
 
   return (
     <div className="App">
-      <Header title="Collaborative Code Editor" isConnected={isConnected} />
-      <div className="editor-container">
-        <Sidebar
-          files={files}
-          currentFileIndex={currentFileIndex}
-          onFileChange={setCurrentFileIndex}
-          onAddFile={addNewFile}
-          onDeleteFile={deleteFile}
-          onRenameFile={renameFile}
-        />
-        {files.length > 0 && (
-          <EditorWrapper
-            content={files[currentFileIndex].content}
-            language={getFileLanguage(files[currentFileIndex].name)}
-            onEditorChange={handleEditorChange}
-          />
-        )}
-      </div>
+      {!user ? ( // Show login page if user is not authenticated
+        <Auth onLogin={handleLogin} />
+      ) : (
+        <>
+          <Header title="Collaborative Code Editor" isConnected={isConnected} />
+          <div className="editor-container">
+            <Sidebar
+              files={files}
+              currentFileIndex={currentFileIndex}
+              onFileChange={setCurrentFileIndex}
+              onAddFile={addNewFile}
+              onDeleteFile={deleteFile}
+              onRenameFile={renameFile}
+            />
+            {files.length > 0 && (
+              <EditorWrapper
+                content={files[currentFileIndex].content}
+                language={getFileLanguage(files[currentFileIndex].name)}
+                onEditorChange={handleEditorChange}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -136,7 +152,7 @@ const Sidebar = ({ files, currentFileIndex, onFileChange, onAddFile, onDeleteFil
 const EditorWrapper = ({ content, language, onEditorChange }) => (
   <div className="editor-wrapper">
     <Editor
-      height="100%"
+      height="100%" 
       language={language}
       theme="vs-dark"
       value={content}
