@@ -1,43 +1,54 @@
 // Auth.js
 import React, { useState } from 'react';
-import { auth } from './firebase';  // Firebase auth
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { auth, googleProvider } from './firebase';  // Import Google Provider
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 
 const Auth = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);  // Loading state for feedback
+  const [loading, setLoading] = useState(false);
 
-  // Handle login or signup
+  // Handle email/password auth
   const handleAuth = async () => {
     setError('');
-    setLoading(true);  // Start loading state
+    setLoading(true);
     try {
       if (isSignUp) {
-        // Sign up new user
         await createUserWithEmailAndPassword(auth, email, password);
       } else {
-        // Log in existing user
         await signInWithEmailAndPassword(auth, email, password);
       }
-      onLogin(auth.currentUser);  // Call the parent component's login handler
+      onLogin(auth.currentUser);
     } catch (err) {
       setError(err.message);
     }
-    setLoading(false);  // Stop loading state
+    setLoading(false);
   };
 
-  // Handle logout (optional)
-  const handleLogout = async () => {
-    await signOut(auth);
-    onLogin(null);
+  // Google Login
+  const handleGoogleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      onLogin(result.user);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  // Form validation for basic email and password requirements
-  const isValidForm = () => {
-    return email.length > 0 && password.length >= 6;
+  // Password reset
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError('Please enter your email address.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert('Password reset email sent.');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -59,9 +70,18 @@ const Auth = ({ onLogin }) => {
         required
         minLength={6}
       />
-      <button onClick={handleAuth} disabled={!isValidForm() || loading}>
+      <button onClick={handleAuth} disabled={!email || password.length < 6 || loading}>
         {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Login'}
       </button>
+
+      <button onClick={handleGoogleLogin}>
+        Sign in with Google
+      </button>
+
+      <button onClick={handlePasswordReset} disabled={!email}>
+        Forgot Password?
+      </button>
+
       <p>
         {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
         <span onClick={() => setIsSignUp(!isSignUp)}>
