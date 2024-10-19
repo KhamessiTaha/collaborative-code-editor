@@ -1,6 +1,5 @@
-// Auth.js
 import React, { useState } from 'react';
-import { auth, googleProvider } from './firebase';  // Import Google Provider
+import { auth, googleProvider } from './firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 
 const Auth = ({ onLogin }) => {
@@ -10,7 +9,6 @@ const Auth = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Handle email/password auth
   const handleAuth = async () => {
     setError('');
     setLoading(true);
@@ -27,7 +25,6 @@ const Auth = ({ onLogin }) => {
     setLoading(false);
   };
 
-  // Google Login
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
@@ -37,7 +34,6 @@ const Auth = ({ onLogin }) => {
     }
   };
 
-  // Password reset
   const handlePasswordReset = async () => {
     if (!email) {
       setError('Please enter your email address.');
