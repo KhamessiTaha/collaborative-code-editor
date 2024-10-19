@@ -3,22 +3,48 @@ import { Editor } from '@monaco-editor/react';
 import io from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import './App.css';
-import Auth from './Auth'; // Import the Auth component for login/signup
-import { auth } from './firebase'; // Import Firebase auth
+import Auth from './Auth';
+import { auth } from './firebase';
+import { debounce } from 'lodash';
 
-const socket = io('http://localhost:3001'); // Change to your backend URL
+const socket = io(process.env.REACT_APP_BACKEND_URL || 'http://localhost:3001', {
+  auth: { token: localStorage.getItem('authToken') }
+});
 
 function App() {
   const [files, setFiles] = useState([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [isConnected, setIsConnected] = useState(socket.connected);
-  const [user, setUser] = useState(null); // State to track the authenticated user
+  const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (user) { // Only connect if user is authenticated
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      if (user) {
+        user.getIdToken().then(token => {
+          localStorage.setItem('authToken', token);
+          socket.auth = { token };
+          socket.connect();
+        });
+      } else {
+        socket.disconnect();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
       socket.on('connect', () => {
         setIsConnected(true);
+        setError(null);
         socket.emit('get-initial-files');
+      });
+
+      socket.on('connect_error', (err) => {
+        setError(`Connection error: ${err.message}`);
       });
 
       socket.on('disconnect', () => setIsConnected(false));
@@ -45,6 +71,7 @@ function App() {
       
       return () => {
         socket.off('connect');
+        socket.off('connect_error');
         socket.off('disconnect');
         socket.off('initial-files');
         socket.off('file-added');
@@ -56,7 +83,7 @@ function App() {
   }, [user, files.length]);
 
   const handleLogin = (loggedInUser) => {
-    setUser(loggedInUser); // Set the authenticated user
+    setUser(loggedInUser);
   };
 
   const addNewFile = () => {
@@ -68,7 +95,7 @@ function App() {
     if (files.length > 1) {
       socket.emit('delete-file', files[index].id);
     } else {
-      alert("You can't delete the last file.");
+      setError("You can't delete the last file.");
     }
   };
 
@@ -76,18 +103,32 @@ function App() {
     socket.emit('rename-file', { fileId: files[index].id, newName });
   };
 
-  const handleEditorChange = (newContent) => {
+  const handleEditorChange = debounce((newContent) => {
     const currentFile = files[currentFileIndex];
     socket.emit('update-file-content', { fileId: currentFile.id, newContent });
+  }, 500);
+
+  const handleSignOut = () => {
+    auth.signOut().then(() => {
+      setUser(null);
+      localStorage.removeItem('authToken');
+      socket.disconnect();
+    });
   };
 
   return (
     <div className="App">
-      {!user ? ( // Show login page if user is not authenticated
+      {!user ? (
         <Auth onLogin={handleLogin} />
       ) : (
         <>
-          <Header title="Collaborative Code Editor" isConnected={isConnected} />
+          <Header 
+            title="Collaborative Code Editor" 
+            isConnected={isConnected} 
+            user={user} 
+            onSignOut={handleSignOut}
+          />
+          {error && <div className="error-message">{error}</div>}
           <div className="editor-container">
             <Sidebar
               files={files}
@@ -111,13 +152,17 @@ function App() {
   );
 }
 
-const Header = ({ title, isConnected }) => (
-  <h1>
-    {title}
-    <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-      {isConnected ? 'Connected' : 'Disconnected'}
-    </span>
-  </h1>
+const Header = ({ title, isConnected, user, onSignOut }) => (
+  <div className="header">
+    <h1>{title}</h1>
+    <div className="user-info">
+      <span>{user.email}</span>
+      <button onClick={onSignOut}>Sign Out</button>
+      <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+        {isConnected ? 'Connected' : 'Disconnected'}
+      </span>
+    </div>
+  </div>
 );
 
 const Sidebar = ({ files, currentFileIndex, onFileChange, onAddFile, onDeleteFile, onRenameFile }) => (
